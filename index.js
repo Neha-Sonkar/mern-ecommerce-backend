@@ -26,36 +26,24 @@ const allowedOrigins = [
 const corsOption = {
     // origin:process.env.FRONT_URL,
     origin: function (origin, callback) {
-        // Allow requests with no origin
+        // Allow requests with no origin (like mobile apps, curl, or server-to-server)
         if (!origin) return callback(null, true)
 
-        // Remove trailing slashes for comparison
-        const normalizedOrigin = origin.replace(/\/$/, '')
-        const normalizedAllowed = allowedOrigins.map(url => url.replace(/\/$/, ''))
-
-        if (normalizedAllowed.includes(normalizedOrigin)) {
-            console.log('✅ CORS allowed for:', normalizedOrigin)
+        // Check if the origin is in the allowed list
+        if (allowedOrigins.indexOf(origin) !== -1) {
             return callback(null, true)
         } else {
-            console.log('❌ CORS blocked:', normalizedOrigin)
-            console.log('Allowed:', normalizedAllowed)
-            return callback(new Error('Not allowed by CORS'), false)
+            const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`
+            return callback(new Error(msg), false)
         }
     },
-    // credentials: true,
-    // methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    // allowedHeaders: ['Content-Type', 'Authorization']
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // 🔥 ADDED OPTIONS
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-    exposedHeaders: ['Content-Length'],
-    optionsSuccessStatus: 200
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH','OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }
 
 app.use(cors(corsOption))
-// 🔥 FIX 2: Handle preflight OPTIONS requests globally
 app.options('*', cors(corsOption))
-
 app.use(helmet())
 app.use(cookieParser())
 
