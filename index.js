@@ -26,33 +26,46 @@ const allowedOrigins = [
 const corsOption = {
     // origin:process.env.FRONT_URL,
     origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+        // Allow requests with no origin
         if (!origin) return callback(null, true)
 
-        // Check if the origin is in the allowed list
-        if (allowedOrigins.indexOf(origin) !== -1) {
+        // Remove trailing slashes for comparison
+        const normalizedOrigin = origin.replace(/\/$/, '')
+        const normalizedAllowed = allowedOrigins.map(url => url.replace(/\/$/, ''))
+
+        if (normalizedAllowed.includes(normalizedOrigin)) {
+            console.log('✅ CORS allowed for:', normalizedOrigin)
             return callback(null, true)
         } else {
-            const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`
-            return callback(new Error(msg), false)
+            console.log('❌ CORS blocked:', normalizedOrigin)
+            console.log('Allowed:', normalizedAllowed)
+            return callback(new Error('Not allowed by CORS'), false)
         }
     },
+    // credentials: true,
+    // methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    // allowedHeaders: ['Content-Type', 'Authorization']
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // 🔥 ADDED OPTIONS
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    exposedHeaders: ['Content-Length'],
+    optionsSuccessStatus: 200
 }
 
 app.use(cors(corsOption))
+// 🔥 FIX 2: Handle preflight OPTIONS requests globally
+app.options('*', cors(corsOption))
+
 app.use(helmet())
 app.use(cookieParser())
 
 app.use(express.json())
-app.use('/auth', authRoutes)
-app.use('/category', categoryRoutes)
-app.use('/products', productRoutes)
-app.use('/cart', cartRoutes)
-app.use('/order', orderRoutes)
-app.use('/subCategory', subCategoryRoutes)
+app.use('/api/auth', authRoutes)
+app.use('/api/category', categoryRoutes)
+app.use('/api/products', productRoutes)
+app.use('/api/cart', cartRoutes)
+app.use('/api/order', orderRoutes)
+app.use('/api/subCategory', subCategoryRoutes)
 
 let isConnected = false
 const connectmongodb = async (req, res) => {
